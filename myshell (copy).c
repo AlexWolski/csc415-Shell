@@ -34,12 +34,10 @@ int main(int* argc, char** argv)
     //Reset the "arguments" array by populating it with null bytes.
     memset(arguments, 0, BUFFERSIZE);
 
-    //Get an input from the user. If the user wants to exit the program, exit.
     if(getInput(PROMPT, input, BUFFERSIZE) == 0)
       exit(0);
 
-    //Parse the user's input into an array
-    numArgs = parseString(input, delims, arguments);
+    numArgs = parseString(input, arguments);
 
     execute(arguments);
   }
@@ -67,7 +65,7 @@ int getInput(char* prompt, char* input, int maxSize)
     return 1;
 }
 
-int parseString(char* string, char* delims, char** output)
+int parseString(char* string, char** output)
 {
   int numTokens = 0;
   
@@ -75,10 +73,10 @@ int parseString(char* string, char* delims, char** output)
     output[0] = strtok(string, delims);
 
     //Loop and populate the array with the tokens
-    while(output[numTokens] != NULL)
+    while(output[numArgs] != NULL)
     {
       numTokens += 1;
-      output[numTokens] = strtok(NULL, delims);
+      output[numArgs] = strtok(NULL, delims);
     }
 
     return numTokens;
