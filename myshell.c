@@ -111,7 +111,7 @@ int parseCommands(char* string, struct command* allCommands, int commandSize)
       if(strcmp(token, "|") == 0)
       {
 	command += 1;
-	argument = 0;
+	argument = 1;
 	allCommands->commandTable[command] = malloc(commandSize);
 	allCommands->commandTable[command][0] = strtok(NULL, delims);
       }
@@ -154,7 +154,7 @@ int parseCommands(char* string, struct command* allCommands, int commandSize)
 
 //Execute the command
 void execute(struct command* allCommands, int numCommands)
-{  
+{ 
   int defaultIn = dup(fileno(stdin));
   int defaultOut = dup(fileno(stdout));
   int input;
@@ -202,13 +202,13 @@ void execute(struct command* allCommands, int numCommands)
     dup2(output, 1);
     close(output);
 
-    if(strcmp(allCommands->commandTable[0][0], "pwd") == 0)
+    if(strcmp(allCommands->commandTable[i][0], "pwd") == 0)
     {
       printWorkingDirectory();
     }
-    else if(strcmp(allCommands->commandTable[0][0], "cd") == 0)
+    else if(strcmp(allCommands->commandTable[i][0], "cd") == 0)
     {
-      changeDirectory(allCommands->commandTable[0][1]);
+      changeDirectory(allCommands->commandTable[i][1]);
     }
     else
     {
@@ -216,7 +216,7 @@ void execute(struct command* allCommands, int numCommands)
       
       if(childProcess == 0)
       {
-        execvp(allCommands->commandTable[0][0], allCommands->commandTable[0]);
+        execvp(allCommands->commandTable[i][0], allCommands->commandTable[i]);
         perror("");
         exit(1);
       }
