@@ -16,32 +16,53 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <sys/types.h>
+#include <sys/wait.h>
+
 #define BUFFERSIZE 256
 #define PROMPT "myShell >> "
 #define PROMPTSIZE sizeof(PROMPT)
+#define MAXARGS
+
+struct command
+{
+  char*** commandTable;
+  char* inputFile;
+  char* outputFile;
+  int append;
+  int background;
+};
+
+int getInput(char* prompt, char* input, int maxSize);
+int parseCommands(char* string, struct command* allCommands, int commandSize);
+void execute(struct command* allCommands, int numCommands);
+void printWorkingDirectory();
+void changeDirectory(char* destination);
 
 int main(int* argc, char** argv)
 {
   //Store what the user inputs
   char* input = malloc(BUFFERSIZE);
-  //2D array of string to store each command and all of their arguments
-  char*** commandTable = malloc(BUFFERSIZE);
+  struct command allCommands = {malloc(4*BUFFERSIZE)};
   int numCommands;
   
   while (1)
   {
     //Reset the "arguments" array by populating it with null bytes.
-    memset(commandTable, 0, BUFFERSIZE);
+    memset(allCommands.commandTable, 0, BUFFERSIZE);
+    allCommands.inputFile = NULL;
+    allCommands.outputFile = NULL;
+    allCommands.append = 0;
+    allCommands.background = 0;
 
     //Get an input from the user. If the user wants to exit the program, then exit.
     if(getInput(PROMPT, input, BUFFERSIZE) == 0)
       exit(0);
 
-    //Parse the user's input into a 2D array where the rows are commands and the columns are arguments
-    numCommands = parseCommands(input, commandTable, BUFFERSIZE);
+    numCommands = parseCommands(input, &allCommands, BUFFERSIZE);
 
     //Execute the commands
-    execute(commandTable, numCommands);
+    execute(&allCommands, numCommands);
   }
   
   return 0;
@@ -69,7 +90,7 @@ int getInput(char* prompt, char* input, int maxSize)
 }
 
 //Take a string of commands and arguments and parse it into a 2D array
-int parseCommands(char* string, char*** commandTable, int commandSize)
+int parseCommands(char* string, struct command* allCommands, int commandSize)
 {
     //Integers to iterate through the 2D array
     int command = 0;
@@ -80,8 +101,8 @@ int parseCommands(char* string, char*** commandTable, int commandSize)
     char* token;
     
     //Create the first row and set its first index to the first token
-    commandTable[0] = malloc(commandSize);
-    commandTable[0][0] = strtok(string, delims);
+    allCommands->commandTable[0] = malloc(commandSize);
+    allCommands->commandTable[0][0] = strtok(string, delims);
     
     //While there are tokens left, keep looping and populate the array with the tokens
     while((token = strtok(NULL, delims)) != NULL)
@@ -91,46 +112,129 @@ int parseCommands(char* string, char*** commandTable, int commandSize)
       {
 	command += 1;
 	argument = 0;
-	commandTable[command] = malloc(commandSize);
-	commandTable[command][0] = strtok(NULL, delims);
+	allCommands->commandTable[command] = malloc(commandSize);
+	allCommands->commandTable[command][0] = strtok(NULL, delims);
+      }
+      else if(strcmp(token, "<") == 0)
+      {
+	char* fileName = strtok(NULL, delims);
+	allCommands->inputFile = malloc(sizeof(fileName));
+        strcpy(allCommands->inputFile, fileName);
+      }
+      else if(strcmp(token, ">") == 0)
+      {
+	char* fileName = strtok(NULL, delims);
+	allCommands->outputFile = malloc(sizeof(fileName));
+        strcpy(allCommands->outputFile, fileName);
+      }
+      else if(strcmp(token, ">>") == 0)
+      {
+	char* fileName = strtok(NULL, delims);
+	allCommands->outputFile = malloc(sizeof(fileName));
+        strcpy(allCommands->outputFile, fileName);
+	allCommands->append = 1;
       }
       //Otherwise, add the token to the array
       else
       {
-        commandTable[command][argument] = token;
+        allCommands->commandTable[command][argument] = token;
+	argument += 1;
       }
-
-      argument += 1;
     }
 
+    if(argument > 0 && strcmp(allCommands->commandTable[command][argument-1], "&") == 0)
+    {
+      allCommands->background = 1;
+      allCommands->commandTable[command][argument-1] = 0;
+    }
+    
     //Return the number of commands in the array
     return command + 1;
 }
 
-
-
 //Execute the command
-int execute(char*** commands, int numCommands)
-{
-    if(strcmp(commands[0][0], "pwd") == 0)
+void execute(struct command* allCommands, int numCommands)
+{  
+  int defaultIn = dup(fileno(stdin));
+  int defaultOut = dup(fileno(stdout));
+  int input;
+  int output;
+  int childProcess;
+  
+  if(allCommands->inputFile != NULL)
+  {
+    input = open(allCommands->inputFile, O_RDONLY);
+  }
+  else
+  {
+    input = dup(defaultIn);
+  }
+  
+  for(int i = 0; i < numCommands; i++)
+  {
+    dup2(input, 0);
+    close(input);
+    
+    if(i != numCommands - 1)
     {
-      printWorkingDirectory(commands[0][1]);
-    }
-    else if(strcmp(commands[0][0], "cd") == 0)
-    {
-      changeDirectory(commands[0][1]);
+      int pipeCmd[2];
+      pipe(pipeCmd);
+      //Inherits
+      input = pipeCmd[0];
+      output = pipeCmd[1];
     }
     else
     {
-      //Execute the command
-      if(fork() == 0)
-        execvp(commands[0][0], commands[0]);
+      if(allCommands->outputFile == NULL)
+      {
+	output = dup(defaultOut);
+      }
+      else if(allCommands->append == 1)
+      {
+	output = open(allCommands->outputFile, O_CREAT | O_WRONLY | O_APPEND, 0666);
+      }
       else
-        wait(NULL);
+      {
+	output = open(allCommands->outputFile, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+      }
     }
+    
+    dup2(output, 1);
+    close(output);
+
+    if(strcmp(allCommands->commandTable[0][0], "pwd") == 0)
+    {
+      printWorkingDirectory();
+    }
+    else if(strcmp(allCommands->commandTable[0][0], "cd") == 0)
+    {
+      changeDirectory(allCommands->commandTable[0][1]);
+    }
+    else
+    {
+      childProcess = fork();
+      
+      if(childProcess == 0)
+      {
+        execvp(allCommands->commandTable[0][0], allCommands->commandTable[0]);
+        perror("");
+        exit(1);
+      }
+    }
+  }
+  
+  dup2(defaultIn, 0);
+  close(defaultIn);
+  dup2(defaultOut, 1);
+  close(defaultOut);
+
+  if(allCommands->background == 0)
+  {
+    waitpid(childProcess, NULL, 0);
+  }
 }
 
-///Built-In shell commands
+/*Built-In shell commands*/
 
 //Print the directory the shell is currently in
 void printWorkingDirectory()
