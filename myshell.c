@@ -66,8 +66,6 @@ int main(int argc, char** argv)
   struct command allCommands = { malloc(BUFFERSIZE*BUFFERSIZE/2) };
   //Used to hold the number of commands in the struct
   int numCommands;
-
-  //using_history();
   
   while (1)
   {
@@ -101,7 +99,7 @@ int getInput(char* prompt, char* input, int maxSize)
 {
     //Prompt the user for an input and read it
     printf("%s", prompt);
-    char* readBuffer = readline(" >> ");
+    char* readBuffer = readline(">> ");
 
     //If the user enters "CTR+D", return false
     if(readBuffer == NULL)
@@ -188,6 +186,27 @@ int parseCommands(char* string, struct command* allCommands, int commandSize)
       allCommands->background = true;
       //Remove '&' from the command
       allCommands->commandTable[command][argument-1] = 0;
+    }
+
+    //If the last command is ls or grep, add the option to enable color for commands
+    if(!strcmp(allCommands->commandTable[command][0], "ls") || !strcmp(allCommands->commandTable[command][0], "grep"))
+    {
+      int i = 0;
+
+      //Keep iterating until i is at the end of the aray
+      while(allCommands->commandTable[command][i] != NULL)
+      {
+	i += 1;
+      }
+
+      //Loop back trough the array and move each elemetn up one index
+      for(; i > 1; i--)
+      {
+	allCommands->commandTable[command][i] = allCommands->commandTable[command][i - 1];
+      }
+
+      //Set the second element to the color option
+      allCommands->commandTable[command][1] = "--color=auto";
     }
     
     //Return the number of commands in the array
