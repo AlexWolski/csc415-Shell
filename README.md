@@ -1,7 +1,6 @@
 # CSC 415 - Project 3 - My Shell
 
-Student Name: Alex Wolski
-
+Student Name: Alex Wolski<br />
 Student ID: 918276364
 
 ## Build/Configure Instructions
@@ -22,7 +21,7 @@ Enter a linux command you want to run	(eg. ls -al)
 <br />
 You can also pipe commands together	(eg. ls -al | more)
 
-## List Extra Credits comepleted
+## List Of Extra Credits Comepleted
 1. Pipe works for any number of commands
 2. The current working directory is shown on the prompt
 3. History of commands is stored. Tab and all of the arrows work
