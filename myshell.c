@@ -108,7 +108,7 @@ char* getCurrDirectory()
 
   while(fullDirectory[fullLength] != '\0')
   {
-    fullLength += 1;
+    fullLength++;
   }
   
   //Home directory
@@ -169,6 +169,23 @@ int getInput(char* prompt, char* input, int maxSize)
     return true;
 }
 
+void makeRoom(char** array, int targetIndex)
+{
+  int i = 0;
+  
+  //Keep iterating until i is at the end of the aray
+  while(array[i] != NULL)
+  {
+    i++;
+  }
+
+  //Loop back trough the array and move each elemetn up one index
+  for(; i > targetIndex; i--)
+  {
+    array[i] = array[i-1];
+  }
+}
+
 //Take a string of commands and arguments and parse it into a command struct
 int parseCommands(char* string, struct command* allCommands, int commandSize)
 {
@@ -190,7 +207,7 @@ int parseCommands(char* string, struct command* allCommands, int commandSize)
       //If the current token is a new pipe symbol, create a new array and start counting from the beginning of that array
       if(!strcmp(token, "|"))
       {
-	command += 1;
+	command++;
 	argument = 1;
 	allCommands->commandTable[command] = malloc(commandSize);
 	allCommands->commandTable[command][0] = strtok(NULL, delims);
@@ -215,7 +232,7 @@ int parseCommands(char* string, struct command* allCommands, int commandSize)
       else
       {
         allCommands->commandTable[command][argument] = token;
-	argument += 1;
+	argument++;
       }
     }
 
@@ -235,19 +252,7 @@ int parseCommands(char* string, struct command* allCommands, int commandSize)
     //If the last command is ls or grep, add the option to enable color for commands
     if(!strcmp(allCommands->commandTable[command][0], "ls") || !strcmp(allCommands->commandTable[command][0], "grep"))
     {
-      int i = 0;
-
-      //Keep iterating until i is at the end of the aray
-      while(allCommands->commandTable[command][i] != NULL)
-      {
-	i += 1;
-      }
-
-      //Loop back trough the array and move each elemetn up one index
-      for(; i > 1; i--)
-      {
-	allCommands->commandTable[command][i] = allCommands->commandTable[command][i - 1];
-      }
+      makeRoom(allCommands->commandTable[command], 1);
 
       //Set the second element to the color option
       allCommands->commandTable[command][1] = "--color=auto";
