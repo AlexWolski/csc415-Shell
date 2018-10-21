@@ -15,20 +15,24 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
 //Needed to use the waitpid function
 #include <sys/types.h>
 #include <sys/wait.h>
+//Needed for the history feature
+#include <readline/readline.h>
+#include <readline/history.h>
 
 //Maximum size of the input the user can enter
 #define BUFFERSIZE 256
 //The string and size of the string used to prompt the user
-#define PROMPT "myShell >> "
+#define PROMPT "myShell "
 #define PROMPTSIZE sizeof(PROMPT)
 
 //Simple keywords for booleans
 #define true 1
 #define false 0
+
+
 
 //Contain all of the commands and thier information from an input
 struct command
@@ -52,7 +56,7 @@ void execute(struct command* allCommands, int numCommands);
 void printWorkingDirectory();
 void changeDirectory(char* destination);
 
-int main(int* argc, char** argv)
+int main(int argc, char** argv)
 {
   //Store what the user inputs
   char* input = malloc(BUFFERSIZE);
@@ -62,20 +66,22 @@ int main(int* argc, char** argv)
   struct command allCommands = { malloc(BUFFERSIZE*BUFFERSIZE/2) };
   //Used to hold the number of commands in the struct
   int numCommands;
+
+  //using_history();
   
   while (1)
   {
     //Reset the variables in the struct. Use memset to set all of the elements of the 2D array to 0
-    memset(allCommands.commandTable, 0, sizeof(allCommands.commandTable));
+    memset(allCommands.commandTable, 0, BUFFERSIZE*BUFFERSIZE/2);
     allCommands.inputFile = NULL;
     allCommands.outputFile = NULL;
     allCommands.append = false;
     allCommands.background = false;
 
     //Get an input from the user. If the user wants to exit the program, then exit.
-    if(getInput(PROMPT, input, BUFFERSIZE) == 0)
+    if(!getInput(PROMPT, input, BUFFERSIZE))
       return 0;
-
+    
     //Parse the input into the struct and store the number of commands parsed
     //The worst case is that the entire input is in one command, so allocate each command the same amount of memory as the input
     numCommands = parseCommands(input, &allCommands, BUFFERSIZE);
@@ -90,25 +96,35 @@ int main(int* argc, char** argv)
   return 0;
 }
 
-//Prompt the user for an input and store it in the given buffer
+//Prompt the user for an input and store it in the given buffer. If the return value is 0, the user wants to exit
 int getInput(char* prompt, char* input, int maxSize)
 {
     //Prompt the user for an input and read it
     printf("%s", prompt);
-    fgets(input, maxSize, stdin);
+    char* readBuffer = readline(" >> ");
 
-    //If the user pressed CTRL+D, return false
-    if(feof(stdin))
+    //If the user enters "CTR+D", return false
+    if(readBuffer == NULL)
     {
       printf("\n");
-      return(0);
+      return false;
     }
+
+    //If the user didn't only enter newline, add the input to the comand history and copy it to input
+    if(sizeof(readBuffer) > 0)
+    {
+      add_history(readBuffer);
+      strcpy(input, readBuffer);
+    }
+    //If the user only input a newline, exit
+    else
+      return false;
     
     //If the user enters "exit", return false
-    if(strcmp(input, "exit\n") == 0)
-      return(0);
+    if(!strcmp(input, "exit"))
+      return false;
 
-    return 1;
+    return true;
 }
 
 //Take a string of commands and arguments and parse it into a command struct
@@ -118,7 +134,7 @@ int parseCommands(char* string, struct command* allCommands, int commandSize)
     int command = 0;
     int argument = 1;
     //Delimiters to split the input string
-    const char* delims = " \n";
+    const char* delims = " ";
     //Store the current token being processed
     char* token;
     

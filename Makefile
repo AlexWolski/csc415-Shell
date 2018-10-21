@@ -1,5 +1,5 @@
 myshell: myshell.c
-	gcc -I -Wall myshell.c -o myshell
+	gcc myshell.c -L/usr/local/lib -I/usr/local/include -lreadline -Wall -o myshell
 
 clean:
 	rm myshell
