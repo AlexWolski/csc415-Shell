@@ -80,8 +80,11 @@ int main(int* argc, char** argv)
     //The worst case is that the entire input is in one command, so allocate each command the same amount of memory as the input
     numCommands = parseCommands(input, &allCommands, BUFFERSIZE);
 
-    //Execute the commands
-    execute(&allCommands, numCommands);
+    //Execute the commands if there are any
+    if(numCommands > 0)
+    {
+      execute(&allCommands, numCommands);
+    }
   }
   
   return 0;
@@ -137,23 +140,17 @@ int parseCommands(char* string, struct command* allCommands, int commandSize)
       //If an input file is specified, store it in the struct
       else if(!strcmp(token, "<"))
       {
-	char* fileName = strtok(NULL, delims);
-	allCommands->inputFile = malloc(sizeof(fileName));
-        strcpy(allCommands->inputFile, fileName);
+	allCommands->inputFile = strtok(NULL, delims);
       }
       //If an output file is specified, store it in the struct
       else if(!strcmp(token, ">"))
       {
-	char* fileName = strtok(NULL, delims);
-	allCommands->outputFile = malloc(sizeof(fileName));
-        strcpy(allCommands->outputFile, fileName);
+	allCommands->outputFile = strtok(NULL, delims);
       }
       //If an output file is specified in append mode, store it in the struct and toggle the append boolean
       else if(!strcmp(token, ">>"))
       {
-	char* fileName = strtok(NULL, delims);
-	allCommands->outputFile = malloc(sizeof(fileName));
-        strcpy(allCommands->outputFile, fileName);
+	allCommands->outputFile = strtok(NULL, delims);
 	allCommands->append = true;
       }
       //Otherwise, add the token to the array
@@ -164,8 +161,13 @@ int parseCommands(char* string, struct command* allCommands, int commandSize)
       }
     }
 
+    if(allCommands->commandTable[0][0] == NULL)
+    {
+      return 0;
+    }
+    
     //If the last argument is '&', toggle the background boolean in the struct
-    if(argument > 0 && strcmp(allCommands->commandTable[command][argument-1], "&") == 0)
+    if(argument > 0 && !strcmp(allCommands->commandTable[command][argument-1], "&"))
     {
       allCommands->background = true;
       //Remove '&' from the command
