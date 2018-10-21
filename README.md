@@ -6,8 +6,10 @@ Student ID: 918276364
 
 ## Build/Configure Instructions
 1. Download the "readline" library. This can be done by running a command:<br /><br />
-sudo apt-get install libreadline-dev	for Debian based platforms, or<br />
-yum install readline-devel		for platforms with yum<br /><br />
+sudo apt-get install libreadline-dev<br />
+for Debian based platforms, or<br />
+yum install readline-devel<br />
+for platforms with yum<br /><br />
 If your linux platform uses neither of the above, follow the cutom intallation instructions:<br />
 https://github.com/JuliaLang/readline/blob/master/INSTALL<br />
 2. Open the terminal and change the directory to inside "csc415-p3-AlexWolski"
