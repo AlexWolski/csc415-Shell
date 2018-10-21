@@ -21,6 +21,8 @@
 //Needed for the history feature
 #include <readline/readline.h>
 #include <readline/history.h>
+//Needed for getting the home directory
+#include <pwd.h>
 
 //Maximum size of the input the user can enter
 #define BUFFERSIZE 256
@@ -94,12 +96,54 @@ int main(int argc, char** argv)
   return 0;
 }
 
+//Return the current directory. Helper function for getInput
+char* getCurrDirectory()
+{
+  //Full working directory
+  char* fullDirectory = malloc(4096);
+  getcwd(fullDirectory, 4096);
+
+  //Get the length of the working directory
+  int fullLength = 0;
+
+  while(fullDirectory[fullLength] != '\0')
+  {
+    fullLength += 1;
+  }
+  
+  //Home directory
+  char* homeDirectory = getenv("HOME");
+  //Get the length of the home directory
+  int homeLength = sizeof(homeDirectory);
+  
+  //If the home directory is a substring of the current directory, simplify the current directory
+  if(!strncmp(fullDirectory, homeDirectory, homeLength) && fullLength >= homeLength)
+  {
+    //Working directory excluding the home direcory. It is the length of the full directory - home directory + ~
+    char* simplifiedDirectory = malloc(fullLength - homeLength + 10);
+
+    //Copy the second half of the full directory not including the home directory
+    strncpy(simplifiedDirectory, fullDirectory + homeLength + 1, fullLength - homeLength);
+    //Replace the first element with '~' to represent the home directory
+    simplifiedDirectory[0] = '~';
+    
+    return simplifiedDirectory;
+  }
+  
+  //If the home directory is not a substring, return the whole directory
+  return fullDirectory;
+}
+
 //Prompt the user for an input and store it in the given buffer. If the return value is 0, the user wants to exit
 int getInput(char* prompt, char* input, int maxSize)
 {
     //Prompt the user for an input and read it
     printf("%s", prompt);
-    char* readBuffer = readline(">> ");
+
+    //Get the current directory and print it
+    printf("%s", getCurrDirectory());
+    
+    char* readBuffer = readline(" >> ");
 
     //If the user enters "CTR+D", return false
     if(readBuffer == NULL)
