@@ -7,7 +7,6 @@ Student ID: 918276364
 ## Build/Configure Instructions
 1. Download the "readline" library. This can be done by running a command:
 <br />
-<br />
 sudo apt-get install libreadline-dev	for Debian based platforms, or
 <br />
 yum install readline-devel		for platforms with yum
@@ -17,8 +16,8 @@ If your linux platform uses neither of the above, follow the cutom intallation i
 <br />
 https://github.com/JuliaLang/readline/blob/master/INSTALL
 
-1. Open the terminal and change the directory to inside "csc415-p3-AlexWolski"
-2. Run the command "make" or "make myshell"
+2. Open the terminal and change the directory to inside "csc415-p3-AlexWolski"
+3. Run the command "make" or "make myshell"
 
 ## Run Instructions
 Run the command "./myshell"
