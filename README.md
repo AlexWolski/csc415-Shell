@@ -5,7 +5,7 @@ Student Name: Alex Wolski
 Student ID: 918276364
 
 ## Build/Configure Instructions
-1. Download the "readline" library. This can be done by running a command:<br />
+1. Download the "readline" library. This can be done by running a command:<br /><br />
 sudo apt-get install libreadline-dev	for Debian based platforms, or<br />
 yum install readline-devel		for platforms with yum<br /><br />
 If your linux platform uses neither of the above, follow the cutom intallation instructions:<br />
