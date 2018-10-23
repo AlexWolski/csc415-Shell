@@ -88,9 +88,7 @@ int main(int argc, char** argv)
 
     //Execute the commands if there are any
     if(numCommands > 0)
-    {
       execute(&allCommands, numCommands);
-    }
   }
   
   return 0;
@@ -107,9 +105,7 @@ char* getCurrDirectory()
   int fullLength = 0;
 
   while(fullDirectory[fullLength] != '\0')
-  {
     fullLength++;
-  }
   
   //Home directory
   char* homeDirectory = getenv("HOME");
@@ -163,9 +159,7 @@ int getInput(char* prompt, char* input, int maxSize)
     }
     //If the user did only enter newline, reset the input string
     else
-    {
       memset(input, 0, maxSize);
-    }
     
     //If the user enters "exit", return false
     if(!strcmp(input, "exit"))
@@ -180,15 +174,11 @@ void makeRoom(char** array, int targetIndex)
   
   //Keep iterating until i is at the end of the aray
   while(array[i] != NULL)
-  {
     i++;
-  }
 
   //Loop back trough the array and move each elemetn up one index
   for(; i > targetIndex; i--)
-  {
     array[i] = array[i-1];
-  }
 }
 
 //Take a string of commands and arguments and parse it into a command struct
@@ -219,14 +209,10 @@ int parseCommands(char* string, struct command* allCommands, int commandSize)
       }
       //If an input file is specified, store it in the struct
       else if(!strcmp(token, "<"))
-      {
 	allCommands->inputFile = strtok(NULL, delims);
-      }
       //If an output file is specified, store it in the struct
       else if(!strcmp(token, ">"))
-      {
 	allCommands->outputFile = strtok(NULL, delims);
-      }
       //If an output file is specified in append mode, store it in the struct and toggle the append boolean
       else if(!strcmp(token, ">>"))
       {
@@ -267,12 +253,18 @@ int parseCommands(char* string, struct command* allCommands, int commandSize)
     return command + 1;
 }
 
+void redirectFD(int newDest, int oldDest)
+{
+  dup2(newDest, oldDest);
+  close(newDest);
+}
+
 //Execute the command
 void execute(struct command* allCommands, int numCommands)
 {
   //Store the defualt input and outfile locations
-  int defaultIn = dup(fileno(stdin));
-  int defaultOut = dup(fileno(stdout));
+  int defaultIn = dup(STDIN_FILENO);
+  int defaultOut = dup(STDOUT_FILENO);
   //Store the input and output locations for each process
   int input;
   int output;
@@ -281,21 +273,17 @@ void execute(struct command* allCommands, int numCommands)
 
   //If there is no input file stored in the struct, use the default input
   if(allCommands->inputFile != NULL)
-  {
     input = open(allCommands->inputFile, O_RDONLY);
-  }
   //Otherwise, store its file id in the 'input' input
   else
-  {
     input = dup(defaultIn);
-  }
 
   //Loop through all of the commands in the struct
   for(int i = 0; i < numCommands; i++)
   {
-    //Redirect the input to the location determined above
-    dup2(input, 0);
-    close(input);
+    //If this is the first process, direct the input to the location determined above
+    //If not, direct the input to the location inherited from the previous iteration
+    redirectFD(input, STDIN_FILENO);
 
     //If the current command isn't the last command, set up a pipe to the next command
     if(i != numCommands - 1)
@@ -313,41 +301,30 @@ void execute(struct command* allCommands, int numCommands)
     {
       //If there is no output file stored in the strut, set the output to the default output location
       if(allCommands->outputFile == NULL)
-      {
 	output = dup(defaultOut);
-      }
       //If there is an output file specified and the append boolean is true, open the file with the append flag
       else if(allCommands->append)
-      {
 	output = open(allCommands->outputFile, O_CREAT | O_WRONLY | O_APPEND, 0666);
-      }
       //If there is an output file specifid and the append boolean is flase, open the file with the truncate flag
       else
-      {
 	output = open(allCommands->outputFile, O_CREAT | O_WRONLY | O_TRUNC, 0666);
-      }
     }
 
-    //After the output location is determined (default location, a file, or a pipe), redirect the program's output to there
-    dup2(output, 1);
-    close(output);
-
+    //After the output location is determined (default location, a file, or a pipe), redirect the program's output to that location
+    redirectFD(output, STDOUT_FILENO);
+    
     //If the current command is 'pwd', run the built in pwd function
     if(!strcmp(allCommands->commandTable[i][0], "pwd"))
-    {
       printWorkingDirectory();
-    }
     //If the current command is 'cd', run the built in cd function
     else if(!strcmp(allCommands->commandTable[i][0], "cd"))
-    {
       changeDirectory(allCommands->commandTable[i][1]);
-    }
     //If the command is not built into the shell, create a child process, find the program, and execute it
     else
     {
       //Create a child process
       childProcess = fork();
-
+      
       //If the current process is the child, execute the command
       if(!childProcess)
       {
@@ -359,17 +336,12 @@ void execute(struct command* allCommands, int numCommands)
   }
 
   //After all of the commands are run, reset the defaut input and output files
-  dup2(defaultIn, 0);
-  close(defaultIn);
-  dup2(defaultOut, 1);
-  close(defaultOut);
-
+  redirectFD(defaultIn, STDIN_FILENO);
+  redirectFD(defaultOut, STDOUT_FILENO);
 
   //If the background boolean is not set in the struct, wait for the last process to finish before returning
   if(!allCommands->background)
-  {
     waitpid(childProcess, NULL, 0);
-  }
 }
 
 /*Built-In shell commands*/
