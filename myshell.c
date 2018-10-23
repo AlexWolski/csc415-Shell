@@ -223,16 +223,21 @@ int parseCommands(char* string, struct command* allCommands, int commandSize)
 	//If the token starts with a quote, keep adding tokens to it until the end quote is found
         if(token[0] == '\"' || token[0] == '\'')
 	{
+	  char quote = token[0];
+	  
 	  //Move each char back an element and overwrite the beginning quote
 	  for(int i = 0; token[i] != '\0'; i++)
 	    token[i] = token[i+1];
 
 	  //Keep adding the next token until the end quote is found
-	  while(token[strlen(token)-1] != '\"')
-	    sprintf(token, " %s", strtok(NULL, delims));
-
-	  while(token[strlen(token)-1] != '\'')
-	    sprintf(token, " %s", strtok(NULL, delims));
+	  //If the token starts with a double quote, search for another double quote
+	  if(quote == '\"')
+	    while(token[strlen(token)-1] != '\"')
+	      sprintf(token, "%s %s", token, strtok(NULL, delims));
+	  //If the token starts with a single quote, search for another single quote
+	  else
+	    while(token[strlen(token)-1] != '\'')
+	      sprintf(token, "%s %s", token, strtok(NULL, delims));
 
 	  //Remove the last quote
 	  token[strlen(token)-1] = '\0';
