@@ -1,7 +1,7 @@
 /****************************************************************
  * Name        : Alex Wolski                                    *
  * Class       : CSC 415                                        *
- * Date        : 10/20/18                                       *
+ * Date        : 10/24/18                                       *
  * Description : Writting a simple bash shell program           *
  *               that will execute simple commands. The main    *
  *               goal of the assignment is working with         *
@@ -137,13 +137,16 @@ char* getCurrDirectory()
 //Prompt the user for an input and store it in the given buffer. If the return value is 0, the user wants to exit
 int getInput(char* prompt, char* input, int maxSize)
 {
-    //Prompt the user for an input and read it
-    printf("%s", prompt);
+    //Allocte enough memory for the maximum directory path and the prompt
+    char* fullPrompt = malloc(4200);
 
-    //Get the current directory and print it
-    printf("%s", getCurrDirectory());
-    
-    char* readBuffer = readline(" >> ");
+    //Construct the full prompt
+    strcpy(fullPrompt, prompt);
+    strcat(fullPrompt, getCurrDirectory());
+    strcat(fullPrompt, " >> ");
+
+    //Pass the full prompt the readline function and store the user's input
+    char* readBuffer = readline(fullPrompt);
 
     //If the user enters "CTR+D", return false
     if(readBuffer == NULL)
@@ -151,21 +154,23 @@ int getInput(char* prompt, char* input, int maxSize)
       printf("\n");
       return false;
     }
-
+    
     //If the user didn't only enter newline, add the input to the comand history and copy it to input
-    if(sizeof(readBuffer) > 0)
+    if(readBuffer[0] != '\0')
     {
       add_history(readBuffer);
-      strcpy(input, readBuffer);
+      strncpy(input, readBuffer, maxSize);
     }
-    //If the user only input a newline, exit
+    //If the user did only enter newline, reset the input string
     else
-      return false;
+    {
+      memset(input, 0, maxSize);
+    }
     
     //If the user enters "exit", return false
     if(!strcmp(input, "exit"))
       return false;
-
+    
     return true;
 }
 
