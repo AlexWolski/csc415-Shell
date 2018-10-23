@@ -24,9 +24,12 @@ You can also pipe commands together	(eg. ls -al | more)
 ## List Of Extra Credits Comepleted
 1. Pipe works for any number of commands
 2. The current working directory is shown on the prompt
-3. History of commands is stored. Tab and all of the arrows work
-4. ls and grep have colored outputs
-5. File names with spaces can be surrounded by quotation marks
+3. History of commands is stored and can be navigated using the up and down arrow keys
+4. The left and right arrowkeys move the cursor
+5. Tab will autocomplete a filename
+6. File names with spaces can be surrounded by quotation marks
+7. ls, and grep have color output
+8. The prompt is colored
 
 ## Collaboration
 I worked on or shared ideas about parts of this project with:

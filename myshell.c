@@ -29,7 +29,10 @@
 //The string and size of the string used to prompt the user
 #define PROMPT "myShell "
 #define PROMPTSIZE sizeof(PROMPT)
-
+//Colors for the prompt
+#define GREEN "\033[32m"
+#define BLUE "\033[34m"
+#define RESETCOLOR "\x1b[0m"
 //Simple keywords for booleans
 #define true 1
 #define false 0
@@ -137,7 +140,7 @@ int getInput(char* prompt, char* input, int maxSize)
     char* fullPrompt = malloc(4200);
 
     //Construct the full prompt
-    sprintf(fullPrompt, "%s%s >> ", prompt, getCurrDirectory());
+    sprintf(fullPrompt, "%s%s%s%s%s >> ", GREEN, prompt, BLUE, getCurrDirectory(), RESETCOLOR);
 
     //Pass the full prompt the readline function and store the user's input
     char* readBuffer = readline(fullPrompt);
@@ -249,9 +252,7 @@ int parseCommands(char* string, struct command* allCommands, int commandSize)
     }
 
     if(allCommands->commandTable[0][0] == NULL)
-    {
       return 0;
-    }
     
     //If the last argument is '&', toggle the background boolean in the struct
     if(argument > 0 && !strcmp(allCommands->commandTable[command][argument-1], "&"))
