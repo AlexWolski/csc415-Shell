@@ -26,6 +26,7 @@ You can also pipe commands together	(eg. ls -al | more)
 2. The current working directory is shown on the prompt
 3. History of commands is stored. Tab and all of the arrows work
 4. ls and grep have colored outputs
+5. File names with spaces can be surrounded by quotation marks
 
 ## Collaboration
 I worked on or shared ideas about parts of this project with:

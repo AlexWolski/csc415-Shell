@@ -137,9 +137,7 @@ int getInput(char* prompt, char* input, int maxSize)
     char* fullPrompt = malloc(4200);
 
     //Construct the full prompt
-    strcpy(fullPrompt, prompt);
-    strcat(fullPrompt, getCurrDirectory());
-    strcat(fullPrompt, " >> ");
+    sprintf(fullPrompt, "%s%s >> ", prompt, getCurrDirectory());
 
     //Pass the full prompt the readline function and store the user's input
     char* readBuffer = readline(fullPrompt);
@@ -222,6 +220,24 @@ int parseCommands(char* string, struct command* allCommands, int commandSize)
       //Otherwise, add the token to the array
       else
       {
+	//If the token starts with a quote, keep adding tokens to it until the end quote is found
+        if(token[0] == '\"' || token[0] == '\'')
+	{
+	  //Move each char back an element and overwrite the beginning quote
+	  for(int i = 0; token[i] != '\0'; i++)
+	    token[i] = token[i+1];
+
+	  //Keep adding the next token until the end quote is found
+	  while(token[strlen(token)-1] != '\"')
+	    sprintf(token, " %s", strtok(NULL, delims));
+
+	  while(token[strlen(token)-1] != '\'')
+	    sprintf(token, " %s", strtok(NULL, delims));
+
+	  //Remove the last quote
+	  token[strlen(token)-1] = '\0';
+	}
+	
         allCommands->commandTable[command][argument] = token;
 	argument++;
       }
