@@ -262,7 +262,9 @@ int parseCommands(char* string, struct command* allCommands, int commandSize)
     }
 
     //If the last command is ls or grep, add the option to enable color for commands
-    if(!strcmp(allCommands->commandTable[command][0], "ls") || !strcmp(allCommands->commandTable[command][0], "grep"))
+    char* firstCommand = allCommands->commandTable[command][0];
+    
+    if(!strcmp(firstCommand, "ls") || !strcmp(firstCommand, "grep"))
     {
       makeRoom(allCommands->commandTable[command], 1);
 
@@ -280,7 +282,19 @@ void redirectFD(int newDest, int oldDest)
   close(newDest);
 }
 
-//Execute the command
+void createPipe(int* readEnd, int* writeEnd)
+{
+  //Create a new pipe
+  int newPipe[2];
+  pipe(newPipe);
+
+  //Store the read and write ends of the pipe
+  *readEnd = newPipe[0];
+  *writeEnd = newPipe[1];
+}
+
+//Execute the command. General algorithm came from:
+//https://www.cs.purdue.edu/homes/grr/SystemsProgrammingBook/Book/Chapter5-WritingYourOwnShell.pdf
 void execute(struct command* allCommands, int numCommands)
 {
   //Store the defualt input and outfile locations
@@ -306,17 +320,9 @@ void execute(struct command* allCommands, int numCommands)
     //If not, direct the input to the location inherited from the previous iteration
     redirectFD(input, STDIN_FILENO);
 
-    //If the current command isn't the last command, set up a pipe to the next command
+    //If the current command isn't the last, create a pipe. This process will write to the pipe and the child will inheir 'input'
     if(i != numCommands - 1)
-    {
-      //Create a pipe
-      int pipeCmd[2];
-      pipe(pipeCmd);
-      //The child will inherit 'input' which points to the read end of the pipe
-      input = pipeCmd[0];
-      //Set the output of the current process to the write end of the pipe so that the next process can read it
-      output = pipeCmd[1];
-    }
+      createPipe(&input, &output);
     //If the current command is the last command, determine where the output should go
     else
     {
