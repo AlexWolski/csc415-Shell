@@ -215,16 +215,12 @@ void right(struct winsize* window, int* cursorOffset, int* totalLength)
   moveCursor(window, cursorOffset, totalLength);
 }
 
+//Not implemented yet
 void backspace(int n, struct winsize* window, int* cursorOffset, int* totalLength)
 {
-  for(int i = 0; i < n; i++)
-  {
-    left(window, cursorOffset, totalLength);
-    printf(" ");
-    left(window, cursorOffset, totalLength);
-  }
 }
 
+//Not implemented yet
 void delete(int n, struct winsize* window, int* cursorOffset, int* totalLength)
 {
 }
@@ -361,6 +357,13 @@ int getInput(char* prompt, char* input, int maxSize, struct history* commandHist
 
 	  strcpy(input, currentHistory);
 	}
+	else
+	{
+	  cursorOffset = cursorMin;
+	  moveCursor(&window, &cursorOffset, &cursorMax);
+	  overWrite("", cursorMax - cursorMin);
+	  moveCursor(&window, &cursorOffset, &cursorMax);
+	}
       }
       //If the user presses right, move the cursor right
       else if(keyPressed == 67)
@@ -381,14 +384,9 @@ int getInput(char* prompt, char* input, int maxSize, struct history* commandHist
 	}
       }
     }
-    //If the user hits backspace, remove the last character in the input string and terminal if it exists
+    //If the user hits backspace, do nothing
     else if(keyPressed == 127)
     {
-      if(i > 0)
-      {
-        //i--;
-        //backspace(1, &window, &cursorOffset, &cursorMax);
-      }
     }
     //If the key pressed is a valid character, append it to the input string
     else if(keyPressed > 31)

@@ -13,6 +13,8 @@ Run the command "./myshell"
 Enter a linux command you want to run	(eg. ls -al)
 <br />
 You can also pipe commands together	(eg. ls -al | more)
+<br />
+There is no backspace or delete feature, so remove text by moving the cursor and replacing it with spaces.
 
 ## List Of Extra Credits Comepleted
 1. Pipe works for any number of commands
