@@ -134,7 +134,6 @@ struct termios* rawShell()
   return oldSettings;
 }
 
-//Reset the previous state of the terminal
 void resetShell(struct termios* oldSettings)
 {
   tcsetattr(STDIN_FILENO, TCSANOW, oldSettings);
@@ -191,7 +190,6 @@ void addStringArray(char** array, int targetIndex, char* item)
   array[targetIndex] = item;
 }
 
-//Take an offset from the last column and move the cursor there
 void moveCursor(struct winsize* window, int* newOffset, int* totalLength)
 {
   //Calclate the position of the cursor given its offset, the length of the command, and the dimensiosn of the terminal
@@ -201,14 +199,12 @@ void moveCursor(struct winsize* window, int* newOffset, int* totalLength)
   printf("\033[%d;%dH", newY, newX + 1);
 }
 
-//Move the cursor left on the screen
 void left(struct winsize* window, int* cursorOffset, int* totalLength)
 {
   (*cursorOffset)--;
   moveCursor(window, cursorOffset, totalLength);
 }
 
-//Move the cursor right on the screen
 void right(struct winsize* window, int* cursorOffset, int* totalLength)
 {
   (*cursorOffset)++;
@@ -229,22 +225,18 @@ void delete(int n, struct winsize* window, int* cursorOffset, int* totalLength)
 {
 }
 
-//Writes a string to the terminal and overwrites the existing text
 void overWrite (char* string, int overWriteSize)
 {
-  //Clear the buffer
   fflush(stdout);
   
   int i = 0;
 
-  //Print the string
   while(string[i] != '\0')
   {
     printf("%c", string[i]);
     i++;
   }
 
-  //If the string doesn't clear the terminal, print spaces
   while(i < overWriteSize)
   {
     printf(" ");
@@ -252,7 +244,6 @@ void overWrite (char* string, int overWriteSize)
   }
 }
 
-//Add a command stored in a string the history data structure
 void addHistory(struct history* commandHistory, char* command, int maxSize)
 {
   commandHistory->history[commandHistory->totalItems] = malloc(maxSize);
@@ -281,14 +272,13 @@ int getInput(char* prompt, char* input, int maxSize, struct history* commandHist
   char* fullPrompt = malloc(5000);
   sprintf(fullPrompt, "%s%s%s%s%s >> ", GREEN, PROMPT, BLUE, getCurrDirectory(), RESETCOLOR);
   printf("%s", fullPrompt);
-
-  //Iterate through the array to determine how long it is
+  
   while(fullPrompt[cursorMin] != '\0')
     cursorMin++;
 
   //Account for the color characters in the string
   cursorMin -= 14;
-  
+
   cursorMax = cursorMin;
   cursorOffset = cursorMin;
   
@@ -304,15 +294,11 @@ int getInput(char* prompt, char* input, int maxSize, struct history* commandHist
       printf("\n");
       return false;
     }
-    //If the user enters a control character
     else if(keyPressed == 27)
     {
-      //Ignore the second input
       getchar();
-      //Get the third one
       keyPressed = getchar();
 
-      //If the user presses up, dispay the previous command
       if(keyPressed == 65)
       {
 	if(historyIndex > 0)
@@ -337,7 +323,6 @@ int getInput(char* prompt, char* input, int maxSize, struct history* commandHist
 	  strcpy(input, currentHistory);
 	}
       }
-      //If the user presses down, display the next command
       else if(keyPressed == 66)
       {
   	if(historyIndex < commandHistory->totalItems - 1)
@@ -362,7 +347,6 @@ int getInput(char* prompt, char* input, int maxSize, struct history* commandHist
 	  strcpy(input, currentHistory);
 	}
       }
-      //If the user presses right, move the cursor right
       else if(keyPressed == 67)
       {
 	if(cursorOffset < cursorMax)
@@ -371,7 +355,6 @@ int getInput(char* prompt, char* input, int maxSize, struct history* commandHist
 	  right(&window, &cursorOffset, &cursorMax);
 	}
       }
-      //If the user presses left, move the cursor left
       else
       {
 	if(cursorOffset > cursorMin)
@@ -410,7 +393,6 @@ int getInput(char* prompt, char* input, int maxSize, struct history* commandHist
   if(!strcmp(input, "exit"))
     return false;
 
-  //After the command is processes, add it to the history
   addHistory(commandHistory, input, maxSize);
   
   return true;
