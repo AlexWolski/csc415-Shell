@@ -16,7 +16,7 @@ You can also pipe commands together	(eg. ls -al | more)
 <br />
 There is no backspace or delete feature, so remove text by moving the cursor and replacing it with spaces.
 
-## List Of Extra Credits Comepleted
+## List Of Extra Credits Completed
 1. Pipe works for any number of commands
 2. The current working directory is shown on the prompt
 3. History of commands is stored and can be navigated using the up and down arrow keys (Without using the readline library)
